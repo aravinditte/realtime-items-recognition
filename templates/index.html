@@ -3,47 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Object Recognition | Advanced AI Vision</title>
+    <title>Real-Time Object Recognition | Live AI Vision</title>
     
-    <!-- Meta tags for SEO -->
-    <meta name="description" content="Real-time object recognition using YOLO and computer vision. Detect objects in live camera feed, uploaded videos, and images.">
-    <meta name="keywords" content="object recognition, object detection, YOLO, computer vision, AI, machine learning, real-time detection">
+    <!-- Meta tags -->
+    <meta name="description" content="Real-time object recognition with live camera detection. Advanced AI-powered vision system using YOLO models.">
+    <meta name="keywords" content="real-time, object recognition, live detection, AI, YOLO, computer vision">
     <meta name="author" content="Aravind Itte">
     
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>🔍</text></svg>">
     
-    <!-- CSS Frameworks -->
+    <!-- CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" rel="stylesheet">
     
-    <!-- Custom CSS -->
     <style>
         :root {
-            --primary-color: #2563eb;
-            --secondary-color: #1e40af;
-            --success-color: #10b981;
-            --danger-color: #ef4444;
-            --warning-color: #f59e0b;
-            --dark-color: #1f2937;
-            --light-color: #f8fafc;
-            --border-radius: 12px;
-            --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #1f2937;
+            --light: #f8fafc;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            color: var(--dark-color);
+            color: var(--dark);
         }
         
         .main-container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
             margin: 20px;
             padding: 30px;
             min-height: calc(100vh - 40px);
@@ -51,13 +50,13 @@
         
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             padding-bottom: 20px;
             border-bottom: 2px solid #e5e7eb;
         }
         
         .header h1 {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             font-weight: 800;
@@ -65,18 +64,12 @@
             margin-bottom: 10px;
         }
         
-        .header p {
-            color: #6b7280;
-            font-size: 1.1rem;
-            margin: 0;
-        }
-        
         .status-bar {
-            background: var(--light-color);
+            background: var(--light);
             border: 2px solid #e5e7eb;
-            border-radius: var(--border-radius);
+            border-radius: var(--radius);
             padding: 15px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -94,26 +87,24 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background-color: var(--danger-color);
+            background: var(--danger);
             animation: pulse 2s infinite;
         }
         
-        .status-indicator.connected {
-            background-color: var(--success-color);
-        }
+        .status-indicator.connected { background: var(--success); }
         
         .control-panel {
             background: white;
-            border-radius: var(--border-radius);
+            border-radius: var(--radius);
             padding: 25px;
-            box-shadow: var(--box-shadow);
-            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
         }
         
         .mode-selector {
             display: flex;
             gap: 15px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             flex-wrap: wrap;
         }
         
@@ -122,9 +113,9 @@
             min-width: 150px;
             padding: 15px 20px;
             border: 2px solid #e5e7eb;
-            border-radius: var(--border-radius);
+            border-radius: var(--radius);
             background: white;
-            color: var(--dark-color);
+            color: var(--dark);
             font-weight: 600;
             transition: all 0.3s ease;
             cursor: pointer;
@@ -132,40 +123,20 @@
         }
         
         .mode-btn:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
+            border-color: var(--primary);
+            color: var(--primary);
             transform: translateY(-2px);
         }
         
         .mode-btn.active {
-            background: var(--primary-color);
-            border-color: var(--primary-color);
+            background: var(--primary);
+            border-color: var(--primary);
             color: white;
-        }
-        
-        .upload-area {
-            border: 2px dashed #d1d5db;
-            border-radius: var(--border-radius);
-            padding: 40px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: #f9fafb;
-        }
-        
-        .upload-area:hover {
-            border-color: var(--primary-color);
-            background: #eff6ff;
-        }
-        
-        .upload-area.dragover {
-            border-color: var(--success-color);
-            background: #ecfdf5;
         }
         
         .video-container {
             background: #000;
-            border-radius: var(--border-radius);
+            border-radius: var(--radius);
             overflow: hidden;
             position: relative;
             min-height: 400px;
@@ -174,37 +145,17 @@
             justify-content: center;
         }
         
-        #videoDisplay, #webcamVideo {
+        #realtimeDisplay, #webcamVideo {
             max-width: 100%;
             height: auto;
             display: block;
         }
         
-        #webcamVideo {
-            transform: scaleX(-1); /* Mirror the video */
-        }
-        
-        .hidden-canvas {
-            display: none;
-        }
-        
-        .detection-info {
+        .realtime-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
             background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            font-size: 14px;
-            z-index: 10;
-        }
-        
-        .detection-overlay {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(0, 0, 0, 0.7);
             color: white;
             padding: 10px;
             border-radius: 8px;
@@ -213,10 +164,22 @@
             z-index: 10;
         }
         
+        .realtime-stats {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 10;
+        }
+        
         .detection-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
         
         .controls {
@@ -229,7 +192,7 @@
         
         .btn-custom {
             padding: 12px 25px;
-            border-radius: var(--border-radius);
+            border-radius: var(--radius);
             font-weight: 600;
             transition: all 0.3s ease;
             border: none;
@@ -240,101 +203,43 @@
         }
         
         .btn-primary {
-            background: var(--primary-color);
+            background: var(--primary);
             color: white;
         }
         
         .btn-primary:hover {
-            background: var(--secondary-color);
+            background: var(--secondary);
             transform: translateY(-2px);
         }
         
         .btn-danger {
-            background: var(--danger-color);
+            background: var(--danger);
             color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #dc2626;
-            transform: translateY(-2px);
         }
         
         .btn-success {
-            background: var(--success-color);
+            background: var(--success);
             color: white;
         }
         
-        .detection-stats {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 20px;
-            box-shadow: var(--box-shadow);
-            margin-top: 30px;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 15px;
-        }
-        
-        .stat-card {
-            background: var(--light-color);
-            padding: 15px;
-            border-radius: 8px;
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: var(--radius);
+            padding: 40px 20px;
             text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9fafb;
         }
         
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary-color);
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: #eff6ff;
         }
         
-        .stat-label {
-            color: #6b7280;
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
-        
-        .loading-spinner {
-            border: 3px solid #f3f4f6;
-            border-top: 3px solid var(--primary-color);
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        
-        .alert {
-            border-radius: var(--border-radius);
-            border: none;
-            padding: 15px 20px;
-            margin-bottom: 20px;
-        }
-        
-        .progress {
-            height: 8px;
-            border-radius: 4px;
-            overflow: hidden;
-            background: #e5e7eb;
-            margin-top: 10px;
-        }
-        
-        .progress-bar {
-            transition: width 0.3s ease;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        .upload-area.dragover {
+            border-color: var(--success);
+            background: #ecfdf5;
         }
         
         .placeholder-text {
@@ -344,32 +249,19 @@
             padding: 40px;
         }
         
-        .feature-highlight {
-            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-            border: 1px solid #bae6fd;
-            border-radius: var(--border-radius);
-            padding: 20px;
-            margin-bottom: 30px;
+        .hidden-canvas { display: none; }
+        .progress { height: 8px; border-radius: 4px; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         
-        .feature-list {
-            list-style: none;
-            padding: 0;
-            margin: 15px 0 0 0;
-        }
-        
-        .feature-list li {
-            padding: 8px 0;
-            position: relative;
-            padding-left: 25px;
-        }
-        
-        .feature-list li:before {
-            content: '✓';
-            position: absolute;
-            left: 0;
-            color: var(--success-color);
-            font-weight: bold;
+        .alert {
+            border-radius: var(--radius);
+            border: none;
+            padding: 15px 20px;
+            margin-bottom: 15px;
         }
         
         @media (max-width: 768px) {
@@ -377,25 +269,11 @@
                 margin: 10px;
                 padding: 20px;
             }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
             .mode-selector {
                 flex-direction: column;
             }
-            
-            .mode-btn {
-                min-width: unset;
-            }
-            
             .controls {
                 flex-direction: column;
-            }
-            
-            .btn-custom {
-                justify-content: center;
             }
         }
     </style>
@@ -405,7 +283,7 @@
         <!-- Header -->
         <div class="header">
             <h1><i class="fas fa-eye"></i> Real-Time Object Recognition</h1>
-            <p>Advanced AI-powered object recognition using YOLO models | Supports live camera, video & image detection</p>
+            <p>Live AI-powered object recognition with instant detection overlays</p>
         </div>
         
         <!-- Status Bar -->
@@ -419,27 +297,18 @@
                 <span id="modelStatus">Loading AI Model...</span>
             </div>
             <div class="status-item">
+                <i class="fas fa-tachometer-alt"></i>
+                <span id="realtimeStatus">Realtime Ready</span>
+            </div>
+            <div class="status-item">
                 <i class="fas fa-clock"></i>
                 <span id="currentTime"></span>
             </div>
         </div>
         
-        <!-- Feature Highlight -->
-        <div class="feature-highlight">
-            <h5><i class="fas fa-star"></i> Key Features</h5>
-            <ul class="feature-list">
-                <li>Real-time object recognition from webcam feed</li>
-                <li>Upload and process videos with object tracking</li>
-                <li>Single image analysis with bounding boxes</li>
-                <li>Supports 80+ object classes (COCO dataset)</li>
-                <li>WebSocket-based low-latency streaming</li>
-                <li>Responsive design for all devices</li>
-            </ul>
-        </div>
-        
         <!-- Control Panel -->
         <div class="control-panel">
-            <h4><i class="fas fa-cog"></i> Recognition Mode</h4>
+            <h4><i class="fas fa-cog"></i> Realtime Recognition Mode</h4>
             
             <!-- Mode Selector -->
             <div class="mode-selector">
@@ -460,24 +329,29 @@
             <!-- Webcam Mode -->
             <div id="webcamMode" class="mode-content">
                 <div class="video-container">
-                    <video id="webcamVideo" autoplay muted style="display: none;"></video>
-                    <img id="processedDisplay" src="" alt="Processed Stream" style="display: none;">
+                    <video id="webcamVideo" autoplay muted playsinline style="display: none;"></video>
+                    <img id="realtimeDisplay" src="" alt="Realtime Recognition" style="display: none;">
                     <canvas id="webcamCanvas" class="hidden-canvas"></canvas>
+                    
                     <div id="videoPlaceholder" class="placeholder-text">
                         <i class="fas fa-video fa-3x mb-3"></i><br>
-                        Click "Start Camera" to begin real-time object recognition
+                        Click "Start Realtime Camera" for live object recognition
                     </div>
-                    <div class="detection-info" id="detectionInfo" style="display: none;">
+                    
+                    <div class="realtime-stats" id="realtimeStats" style="display: none;">
                         <div>Objects: <span id="objectCount">0</span></div>
                         <div>FPS: <span id="fpsDisplay">0</span></div>
+                        <div>Queue: <span id="queueSize">0</span></div>
                     </div>
-                    <div class="detection-overlay" id="detectionOverlay" style="display: none;">
+                    
+                    <div class="realtime-overlay" id="realtimeOverlay" style="display: none;">
                         <div id="detectionList"></div>
                     </div>
                 </div>
+                
                 <div class="controls">
                     <button id="startWebcam" class="btn-custom btn-primary">
-                        <i class="fas fa-play"></i> Start Camera
+                        <i class="fas fa-play"></i> Start Realtime Camera
                     </button>
                     <button id="stopWebcam" class="btn-custom btn-danger" style="display: none;">
                         <i class="fas fa-stop"></i> Stop Camera
@@ -488,25 +362,28 @@
             <!-- Upload Mode -->
             <div id="uploadMode" class="mode-content" style="display: none;">
                 <div class="video-container">
-                    <img id="videoDisplay" src="" alt="Video Stream" style="display: none;">
+                    <img id="uploadDisplay" src="" alt="Upload Processing" style="display: none;">
+                    
                     <div id="uploadPlaceholder" class="placeholder-text">
                         <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i><br>
-                        Upload a file to see real-time recognition
+                        Upload files for realtime recognition processing
                     </div>
-                    <div class="detection-info" id="uploadDetectionInfo" style="display: none;">
+                    
+                    <div class="realtime-stats" id="uploadStats" style="display: none;">
                         <div>Objects: <span id="uploadObjectCount">0</span></div>
                         <div>Progress: <span id="uploadProgress">0%</span></div>
                     </div>
-                    <div class="detection-overlay" id="uploadDetectionOverlay" style="display: none;">
+                    
+                    <div class="realtime-overlay" id="uploadOverlay" style="display: none;">
                         <div id="uploadDetectionList"></div>
                     </div>
                 </div>
                 
                 <div class="upload-area" id="uploadArea">
                     <i class="fas fa-cloud-upload-alt fa-3x mb-3" style="color: #9ca3af;"></i>
-                    <h5>Drag & Drop Files Here</h5>
+                    <h5>Drag & Drop Files for Realtime Processing</h5>
                     <p>or click to browse</p>
-                    <small class="text-muted">Supported: MP4, AVI, MOV, JPG, PNG (Max: 50MB)</small>
+                    <small>Supported: MP4, AVI, MOV, JPG, PNG (Max: 50MB)</small>
                     <input type="file" id="fileInput" class="d-none" accept="video/*,image/*">
                 </div>
                 
@@ -517,7 +394,7 @@
                 </div>
                 
                 <div class="progress" id="uploadProgressBar" style="display: none;">
-                    <div class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+                    <div class="progress-bar bg-primary" style="width: 0%"></div>
                 </div>
             </div>
         </div>
@@ -525,107 +402,88 @@
         <!-- Alerts -->
         <div id="alertContainer"></div>
         
-        <!-- Recognition Statistics -->
-        <div class="detection-stats">
-            <h4><i class="fas fa-chart-bar"></i> Recognition Statistics</h4>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalDetections">0</div>
-                    <div class="stat-label">Total Detections</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="uniqueObjects">0</div>
-                    <div class="stat-label">Unique Objects</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="avgConfidence">0%</div>
-                    <div class="stat-label">Avg Confidence</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="processingTime">0ms</div>
-                    <div class="stat-label">Processing Speed</div>
-                </div>
-            </div>
-        </div>
-        
         <!-- Footer -->
-        <div class="text-center mt-4 pt-3" style="border-top: 1px solid #e5e7eb; color: #6b7280;">
+        <div class="text-center mt-3 pt-3" style="border-top: 1px solid #e5e7eb; color: #6b7280;">
             <p class="mb-0">
-                <i class="fas fa-code"></i> Built with Python, Flask, OpenCV, YOLO & love | 
-                <a href="https://github.com/aravinditte/realtime-object-recognition" target="_blank" class="text-decoration-none">
+                <i class="fas fa-bolt"></i> Powered by Real-Time AI Vision | 
+                <a href="https://github.com/aravinditte/realtime-object-recognition" target="_blank">
                     <i class="fab fa-github"></i> View Source
                 </a>
             </p>
         </div>
     </div>
     
-    <!-- JavaScript Libraries -->
+    <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     
-    <!-- Custom JavaScript -->
     <script>
-        // Global variables
+        // Realtime variables
         let socket;
         let webcamStream = null;
         let webcamActive = false;
-        let detectionStats = {
+        let realtimeStats = {
             total: 0,
             unique: new Set(),
-            confidenceSum: 0,
-            processingTimes: []
+            confidenceSum: 0
         };
         let lastFrameTime = 0;
-        let fpsCounter = 0;
         let currentMode = 'webcam';
         
-        // Initialize application
+        // Initialize realtime application
         document.addEventListener('DOMContentLoaded', function() {
-            initializeSocket();
+            initializeRealtimeSocket();
             setupEventListeners();
             updateClock();
             setInterval(updateClock, 1000);
         });
         
-        // Initialize Socket.IO connection with WebSocket-only transport
-        function initializeSocket() {
-            // Force WebSocket transport only to avoid payload overflow
+        // Initialize realtime Socket.IO connection
+        function initializeRealtimeSocket() {
             socket = io({
                 transports: ['websocket'],
+                path: '/socket.io',
                 upgrade: false,
                 reconnection: true,
                 reconnectionAttempts: 5,
                 reconnectionDelay: 1000,
-                timeout: 20000
+                timeout: 20000,
+                withCredentials: false
             });
             
             socket.on('connect', function() {
                 updateConnectionStatus(true);
-                showAlert('Connected to server successfully!', 'success');
-                console.log('Connected with transport:', socket.io.engine.transport.name);
+                showAlert('Realtime connection established!', 'success');
+                console.log('Realtime WebSocket connected:', socket.io.engine.transport.name);
             });
             
             socket.on('disconnect', function() {
                 updateConnectionStatus(false);
-                showAlert('Disconnected from server', 'warning');
+                showAlert('Realtime connection lost', 'warning');
             });
             
             socket.on('connect_error', function(error) {
-                console.error('Connection error:', error);
-                showAlert('Connection error: ' + error.message, 'danger');
+                showAlert('Realtime connection error: ' + error.message, 'danger');
             });
             
             socket.on('connection_status', function(data) {
                 updateModelStatus(data.model_loaded);
+                if (data.realtime_ready) {
+                    updateRealtimeStatus(true);
+                }
             });
             
             socket.on('processed_frame', function(data) {
-                displayProcessedFrame(data.frame, data.detections);
+                displayRealtimeFrame(data.frame, data.detections);
                 updateFPS();
             });
             
             socket.on('video_frame', function(data) {
-                displayVideoFrame(data.frame, data.detections, data.progress);
+                displayUploadFrame(data.frame, data.detections, data.progress);
+            });
+            
+            socket.on('queue_status', function(data) {
+                document.getElementById('queueSize').textContent = data.queue_size;
             });
             
             socket.on('error', function(data) {
@@ -633,27 +491,20 @@
             });
             
             socket.on('video_complete', function() {
-                showAlert('Video processing completed!', 'success');
-                document.getElementById('uploadControls').style.display = 'none';
-                document.getElementById('uploadProgressBar').style.display = 'none';
-            });
-            
-            socket.on('processing_stopped', function() {
-                showAlert('Processing stopped', 'info');
+                showAlert('Realtime video processing completed!', 'success');
+                hideUploadControls();
             });
         }
         
         // Setup event listeners
         function setupEventListeners() {
-            // Mode selector
+            // Mode switching
             document.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    switchMode(this.dataset.mode);
-                });
+                btn.addEventListener('click', () => switchMode(btn.dataset.mode));
             });
             
             // Webcam controls
-            document.getElementById('startWebcam').addEventListener('click', startWebcam);
+            document.getElementById('startWebcam').addEventListener('click', startRealtimeWebcam);
             document.getElementById('stopWebcam').addEventListener('click', stopWebcam);
             
             // Upload controls
@@ -662,33 +513,23 @@
             
             uploadArea.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', handleFileSelect);
-            
-            // Drag and drop
             uploadArea.addEventListener('dragover', handleDragOver);
             uploadArea.addEventListener('dragleave', handleDragLeave);
             uploadArea.addEventListener('drop', handleFileDrop);
             
-            // Stop processing
-            document.getElementById('stopProcessing').addEventListener('click', function() {
+            document.getElementById('stopProcessing').addEventListener('click', () => {
                 socket.emit('stop_processing');
                 stopWebcam();
             });
         }
         
-        // Switch between modes
+        // Switch modes
         function switchMode(mode) {
-            // Stop any active processing
-            if (webcamActive) {
-                stopWebcam();
-            }
+            if (webcamActive) stopWebcam();
             
-            // Update UI
-            document.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
             
-            // Show/hide mode content
             document.querySelectorAll('.mode-content').forEach(content => {
                 content.style.display = 'none';
             });
@@ -702,16 +543,15 @@
             currentMode = mode;
         }
         
-        // Start webcam using browser's getUserMedia
-        async function startWebcam() {
+        // Start realtime webcam
+        async function startRealtimeWebcam() {
             try {
-                // Request camera access with optimal settings
                 webcamStream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         width: { ideal: 640 }, 
                         height: { ideal: 480 },
                         facingMode: 'user',
-                        frameRate: { ideal: 15, max: 30 }
+                        frameRate: { ideal: 15 }
                     } 
                 });
                 
@@ -719,63 +559,59 @@
                 video.srcObject = webcamStream;
                 video.style.display = 'block';
                 
-                // Wait for video to be ready
                 video.onloadedmetadata = () => {
                     video.play();
                     
-                    // Hide placeholder and show detection info
+                    // Show realtime interface
                     document.getElementById('videoPlaceholder').style.display = 'none';
-                    document.getElementById('detectionInfo').style.display = 'block';
-                    document.getElementById('detectionOverlay').style.display = 'block';
+                    document.getElementById('realtimeStats').style.display = 'block';
+                    document.getElementById('realtimeOverlay').style.display = 'block';
                     
-                    // Update UI
+                    // Update controls
                     document.getElementById('startWebcam').style.display = 'none';
                     document.getElementById('stopWebcam').style.display = 'inline-flex';
                     
                     webcamActive = true;
+                    processRealtimeFrames();
                     
-                    // Start processing frames
-                    processWebcamFrames();
-                    
-                    showAlert('Camera started successfully!', 'success');
+                    showAlert('Realtime camera started!', 'success');
                 };
                 
             } catch (error) {
-                console.error('Error accessing camera:', error);
-                let errorMessage = 'Camera access denied';
+                let errorMessage = 'Camera access error';
                 if (error.name === 'NotFoundError') {
-                    errorMessage = 'No camera found on this device';
+                    errorMessage = 'No camera found';
                 } else if (error.name === 'NotAllowedError') {
-                    errorMessage = 'Camera permission denied. Please allow camera access and try again.';
+                    errorMessage = 'Camera permission denied. Please allow camera access.';
                 } else if (error.name === 'NotReadableError') {
-                    errorMessage = 'Camera is already in use by another application';
+                    errorMessage = 'Camera is busy or unavailable';
                 }
                 showAlert(errorMessage, 'danger');
             }
         }
         
-        // Process webcam frames with improved rate limiting
-        function processWebcamFrames() {
+        // Process realtime frames
+        function processRealtimeFrames() {
             if (!webcamActive || !socket.connected) return;
             
             const video = document.getElementById('webcamVideo');
             const canvas = document.getElementById('webcamCanvas');
             const ctx = canvas.getContext('2d');
             
-            // Set canvas dimensions to match video
-            canvas.width = video.videoWidth || 640;
-            canvas.height = video.videoHeight || 480;
+            // Set optimal canvas size
+            canvas.width = 640;
+            canvas.height = 480;
             
-            // Draw current frame to canvas
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // Draw scaled frame
+            ctx.drawImage(video, 0, 0, 640, 480);
             
-            // Convert to base64 with reduced quality for faster transmission
-            const frameData = canvas.toDataURL('image/jpeg', 0.7);
+            // Send optimized frame
+            const frameData = canvas.toDataURL('image/jpeg', 0.6);
             socket.emit('webcam_frame', { frame: frameData });
             
-            // Continue processing at controlled rate
+            // Continue at ~6-8 FPS for optimal realtime performance
             if (webcamActive) {
-                setTimeout(processWebcamFrames, 150); // ~6-7 FPS to reduce server load
+                setTimeout(processRealtimeFrames, 120);
             }
         }
         
@@ -790,83 +626,93 @@
             
             // Reset UI
             document.getElementById('webcamVideo').style.display = 'none';
-            document.getElementById('processedDisplay').style.display = 'none';
+            document.getElementById('realtimeDisplay').style.display = 'none';
             document.getElementById('videoPlaceholder').style.display = 'block';
-            document.getElementById('detectionInfo').style.display = 'none';
-            document.getElementById('detectionOverlay').style.display = 'none';
+            document.getElementById('realtimeStats').style.display = 'none';
+            document.getElementById('realtimeOverlay').style.display = 'none';
             
             document.getElementById('startWebcam').style.display = 'inline-flex';
             document.getElementById('stopWebcam').style.display = 'none';
         }
         
-        // Display processed frame
-        function displayProcessedFrame(frameData, detections) {
-            const img = document.getElementById('processedDisplay');
+        // Display realtime frame
+        function displayRealtimeFrame(frameData, detections) {
+            const img = document.getElementById('realtimeDisplay');
             img.src = frameData;
             img.style.display = 'block';
             
             // Hide original video
             document.getElementById('webcamVideo').style.display = 'none';
             
-            updateDetectionInfo(detections, 'detectionInfo', 'objectCount', 'detectionOverlay', 'detectionList');
+            updateDetectionInfo(detections, 'objectCount', 'detectionList');
         }
         
-        // Display video frame
-        function displayVideoFrame(frameData, detections, progress) {
-            const img = document.getElementById('videoDisplay');
+        // Display upload frame
+        function displayUploadFrame(frameData, detections, progress) {
+            const img = document.getElementById('uploadDisplay');
             img.src = frameData;
             img.style.display = 'block';
             
-            // Hide placeholder
             document.getElementById('uploadPlaceholder').style.display = 'none';
-            document.getElementById('uploadDetectionInfo').style.display = 'block';
-            document.getElementById('uploadDetectionOverlay').style.display = 'block';
+            document.getElementById('uploadStats').style.display = 'block';
+            document.getElementById('uploadOverlay').style.display = 'block';
             
-            // Update progress
             document.getElementById('uploadProgress').textContent = Math.round(progress) + '%';
             document.querySelector('.progress-bar').style.width = progress + '%';
             
-            updateDetectionInfo(detections, 'uploadDetectionInfo', 'uploadObjectCount', 'uploadDetectionOverlay', 'uploadDetectionList');
+            updateDetectionInfo(detections, 'uploadObjectCount', 'uploadDetectionList');
         }
         
-        // Handle file selection
+        // Update detection info
+        function updateDetectionInfo(detections, countId, listId) {
+            document.getElementById(countId).textContent = detections.length;
+            
+            const detectionList = document.getElementById(listId);
+            detectionList.innerHTML = '';
+            
+            const objectCounts = {};
+            detections.forEach(detection => {
+                objectCounts[detection.class] = (objectCounts[detection.class] || 0) + 1;
+                realtimeStats.unique.add(detection.class);
+            });
+            
+            Object.entries(objectCounts).forEach(([className, count]) => {
+                const item = document.createElement('div');
+                item.className = 'detection-item';
+                item.innerHTML = `<span>${className}</span><span>${count}</span>`;
+                detectionList.appendChild(item);
+            });
+            
+            realtimeStats.total += detections.length;
+        }
+        
+        // File handling
         function handleFileSelect(event) {
             const file = event.target.files[0];
-            if (file) {
-                processFile(file);
-            }
+            if (file) processFile(file);
         }
         
-        // Handle drag over
         function handleDragOver(event) {
             event.preventDefault();
             event.currentTarget.classList.add('dragover');
         }
         
-        // Handle drag leave
         function handleDragLeave(event) {
             event.currentTarget.classList.remove('dragover');
         }
         
-        // Handle file drop
         function handleFileDrop(event) {
             event.preventDefault();
             event.currentTarget.classList.remove('dragover');
-            
             const files = event.dataTransfer.files;
-            if (files.length > 0) {
-                processFile(files[0]);
-            }
+            if (files.length > 0) processFile(files[0]);
         }
         
-        // Process uploaded file
         function processFile(file) {
             const formData = new FormData();
             formData.append('file', file);
             
-            // Show processing UI
-            document.getElementById('uploadControls').style.display = 'flex';
-            document.getElementById('uploadProgressBar').style.display = 'block';
+            showUploadControls();
             
             fetch('/upload', {
                 method: 'POST',
@@ -874,76 +720,47 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
+                if (data.error) throw new Error(data.error);
                 
                 if (data.type === 'image') {
                     displayProcessedImage(data.image, data.detections);
                 } else if (data.type === 'video') {
                     socket.emit('process_video', { filepath: data.filepath });
-                    showAlert('Processing video with real-time recognition...', 'info');
+                    showAlert('Processing video with realtime recognition...', 'info');
                 }
             })
             .catch(error => {
                 showAlert(error.message, 'danger');
-                document.getElementById('uploadControls').style.display = 'none';
-                document.getElementById('uploadProgressBar').style.display = 'none';
+                hideUploadControls();
             });
         }
         
-        // Display processed image
         function displayProcessedImage(imageData, detections) {
-            const img = document.getElementById('videoDisplay');
+            const img = document.getElementById('uploadDisplay');
             img.src = `data:image/jpeg;base64,${imageData}`;
             img.style.display = 'block';
             
             document.getElementById('uploadPlaceholder').style.display = 'none';
-            document.getElementById('uploadDetectionInfo').style.display = 'block';
-            document.getElementById('uploadDetectionOverlay').style.display = 'block';
+            document.getElementById('uploadStats').style.display = 'block';
+            document.getElementById('uploadOverlay').style.display = 'block';
             
-            updateDetectionInfo(detections, 'uploadDetectionInfo', 'uploadObjectCount', 'uploadDetectionOverlay', 'uploadDetectionList');
+            updateDetectionInfo(detections, 'uploadObjectCount', 'uploadDetectionList');
             showAlert(`Recognized ${detections.length} object(s)`, 'success');
             
+            hideUploadControls();
+        }
+        
+        function showUploadControls() {
+            document.getElementById('uploadControls').style.display = 'flex';
+            document.getElementById('uploadProgressBar').style.display = 'block';
+        }
+        
+        function hideUploadControls() {
             document.getElementById('uploadControls').style.display = 'none';
             document.getElementById('uploadProgressBar').style.display = 'none';
         }
         
-        // Update detection information
-        function updateDetectionInfo(detections, infoId, countId, overlayId, listId) {
-            // Update count
-            document.getElementById(countId).textContent = detections.length;
-            
-            // Update detection list overlay
-            const detectionList = document.getElementById(listId);
-            detectionList.innerHTML = '';
-            
-            const objectCounts = {};
-            detections.forEach(detection => {
-                objectCounts[detection.class] = (objectCounts[detection.class] || 0) + 1;
-            });
-            
-            Object.entries(objectCounts).forEach(([className, count]) => {
-                const item = document.createElement('div');
-                item.className = 'detection-item';
-                item.innerHTML = `
-                    <span>${className}</span>
-                    <span>${count}</span>
-                `;
-                detectionList.appendChild(item);
-            });
-            
-            // Update statistics
-            detectionStats.total += detections.length;
-            detections.forEach(detection => {
-                detectionStats.unique.add(detection.class);
-                detectionStats.confidenceSum += detection.confidence;
-            });
-            
-            updateStatistics();
-        }
-        
-        // Update FPS display
+        // Update FPS
         function updateFPS() {
             const currentTime = Date.now();
             if (lastFrameTime) {
@@ -953,17 +770,7 @@
             lastFrameTime = currentTime;
         }
         
-        // Update statistics display
-        function updateStatistics() {
-            document.getElementById('totalDetections').textContent = detectionStats.total;
-            document.getElementById('uniqueObjects').textContent = detectionStats.unique.size;
-            
-            const avgConfidence = detectionStats.total > 0 ? 
-                Math.round((detectionStats.confidenceSum / detectionStats.total) * 100) : 0;
-            document.getElementById('avgConfidence').textContent = avgConfidence + '%';
-        }
-        
-        // Update connection status
+        // Status updates
         function updateConnectionStatus(connected) {
             const indicator = document.getElementById('connectionStatus');
             const text = document.getElementById('connectionText');
@@ -977,50 +784,45 @@
             }
         }
         
-        // Update model status
         function updateModelStatus(loaded) {
             const status = document.getElementById('modelStatus');
-            if (loaded) {
-                status.innerHTML = '<i class="fas fa-check-circle text-success"></i> AI Model Ready';
-            } else {
-                status.innerHTML = '<i class="fas fa-exclamation-triangle text-warning"></i> AI Model Loading...';
-            }
+            status.innerHTML = loaded ? 
+                '<i class="fas fa-check-circle text-success"></i> AI Model Ready' :
+                '<i class="fas fa-hourglass-half text-warning"></i> Loading Model...';
         }
         
-        // Update clock
+        function updateRealtimeStatus(ready) {
+            const status = document.getElementById('realtimeStatus');
+            status.innerHTML = ready ?
+                '<i class="fas fa-bolt text-success"></i> Realtime Ready' :
+                '<i class="fas fa-clock text-warning"></i> Initializing...';
+        }
+        
         function updateClock() {
-            const now = new Date();
-            document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString();
         }
         
-        // Show alert
+        // Alert system
         function showAlert(message, type) {
-            const alertContainer = document.getElementById('alertContainer');
+            const container = document.getElementById('alertContainer');
             const alertId = 'alert-' + Date.now();
             
             const alertHtml = `
-                <div id="${alertId}" class="alert alert-${type} alert-dismissible animate__animated animate__fadeInDown" role="alert">
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible animate__animated animate__fadeInDown">
                     ${message}
                     <button type="button" class="btn-close" onclick="dismissAlert('${alertId}')"></button>
                 </div>
             `;
             
-            alertContainer.insertAdjacentHTML('beforeend', alertHtml);
-            
-            // Auto dismiss after 5 seconds
-            setTimeout(() => {
-                dismissAlert(alertId);
-            }, 5000);
+            container.insertAdjacentHTML('beforeend', alertHtml);
+            setTimeout(() => dismissAlert(alertId), 4000);
         }
         
-        // Dismiss alert
         function dismissAlert(alertId) {
             const alert = document.getElementById(alertId);
             if (alert) {
                 alert.classList.add('animate__fadeOutUp');
-                setTimeout(() => {
-                    alert.remove();
-                }, 300);
+                setTimeout(() => alert.remove(), 300);
             }
         }
     </script>
