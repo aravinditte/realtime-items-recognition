@@ -185,15 +185,6 @@ python -c "from app import app; print('App imports successfully')"
 # Load testing (install hey first)
 hey -n 1000 -c 10 http://localhost:5000/health
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
 ### Development Setup
 
 ```bash
@@ -274,22 +265,6 @@ video_complete       - Video processing finished
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Author
-
-**Aravind Itte**
-- GitHub: [@aravinditte](https://github.com/aravinditte)
-- LinkedIn: [Connect with me](https://linkedin.com/in/aravinditte)
-- Email: aravinditte@gmail.com
-
-## Acknowledgments
-
-- [Ultralytics](https://ultralytics.com) for the amazing YOLO models
-- [OpenCV](https://opencv.org) for computer vision capabilities
-- [Flask](https://flask.palletsprojects.com) for the web framework
-- [Socket.IO](https://socket.io) for real-time communication
-- [Bootstrap](https://getbootstrap.com) for the responsive UI
-
 ---
 
 <p align="center">
