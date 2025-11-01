@@ -587,18 +587,32 @@
             setInterval(updateClock, 1000);
         });
         
-        // Initialize Socket.IO connection
+        // Initialize Socket.IO connection with WebSocket-only transport
         function initializeSocket() {
-            socket = io();
+            // Force WebSocket transport only to avoid payload overflow
+            socket = io({
+                transports: ['websocket'],
+                upgrade: false,
+                reconnection: true,
+                reconnectionAttempts: 5,
+                reconnectionDelay: 1000,
+                timeout: 20000
+            });
             
             socket.on('connect', function() {
                 updateConnectionStatus(true);
                 showAlert('Connected to server successfully!', 'success');
+                console.log('Connected with transport:', socket.io.engine.transport.name);
             });
             
             socket.on('disconnect', function() {
                 updateConnectionStatus(false);
                 showAlert('Disconnected from server', 'warning');
+            });
+            
+            socket.on('connect_error', function(error) {
+                console.error('Connection error:', error);
+                showAlert('Connection error: ' + error.message, 'danger');
             });
             
             socket.on('connection_status', function(data) {
@@ -691,12 +705,13 @@
         // Start webcam using browser's getUserMedia
         async function startWebcam() {
             try {
-                // Request camera access
+                // Request camera access with optimal settings
                 webcamStream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         width: { ideal: 640 }, 
                         height: { ideal: 480 },
-                        facingMode: 'user'
+                        facingMode: 'user',
+                        frameRate: { ideal: 15, max: 30 }
                     } 
                 });
                 
@@ -704,50 +719,63 @@
                 video.srcObject = webcamStream;
                 video.style.display = 'block';
                 
-                // Hide placeholder
-                document.getElementById('videoPlaceholder').style.display = 'none';
-                document.getElementById('detectionInfo').style.display = 'block';
-                document.getElementById('detectionOverlay').style.display = 'block';
-                
-                // Update UI
-                document.getElementById('startWebcam').style.display = 'none';
-                document.getElementById('stopWebcam').style.display = 'inline-flex';
-                
-                webcamActive = true;
-                
-                // Start processing frames
-                processWebcamFrames();
-                
-                showAlert('Camera started successfully!', 'success');
+                // Wait for video to be ready
+                video.onloadedmetadata = () => {
+                    video.play();
+                    
+                    // Hide placeholder and show detection info
+                    document.getElementById('videoPlaceholder').style.display = 'none';
+                    document.getElementById('detectionInfo').style.display = 'block';
+                    document.getElementById('detectionOverlay').style.display = 'block';
+                    
+                    // Update UI
+                    document.getElementById('startWebcam').style.display = 'none';
+                    document.getElementById('stopWebcam').style.display = 'inline-flex';
+                    
+                    webcamActive = true;
+                    
+                    // Start processing frames
+                    processWebcamFrames();
+                    
+                    showAlert('Camera started successfully!', 'success');
+                };
                 
             } catch (error) {
                 console.error('Error accessing camera:', error);
-                showAlert(`Camera access denied: ${error.message}`, 'danger');
+                let errorMessage = 'Camera access denied';
+                if (error.name === 'NotFoundError') {
+                    errorMessage = 'No camera found on this device';
+                } else if (error.name === 'NotAllowedError') {
+                    errorMessage = 'Camera permission denied. Please allow camera access and try again.';
+                } else if (error.name === 'NotReadableError') {
+                    errorMessage = 'Camera is already in use by another application';
+                }
+                showAlert(errorMessage, 'danger');
             }
         }
         
-        // Process webcam frames
+        // Process webcam frames with improved rate limiting
         function processWebcamFrames() {
-            if (!webcamActive) return;
+            if (!webcamActive || !socket.connected) return;
             
             const video = document.getElementById('webcamVideo');
             const canvas = document.getElementById('webcamCanvas');
             const ctx = canvas.getContext('2d');
             
-            // Set canvas dimensions
+            // Set canvas dimensions to match video
             canvas.width = video.videoWidth || 640;
             canvas.height = video.videoHeight || 480;
             
             // Draw current frame to canvas
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            // Convert to base64 and send to server
-            const frameData = canvas.toDataURL('image/jpeg', 0.8);
+            // Convert to base64 with reduced quality for faster transmission
+            const frameData = canvas.toDataURL('image/jpeg', 0.7);
             socket.emit('webcam_frame', { frame: frameData });
             
-            // Continue processing
+            // Continue processing at controlled rate
             if (webcamActive) {
-                setTimeout(processWebcamFrames, 100); // ~10 FPS
+                setTimeout(processWebcamFrames, 150); // ~6-7 FPS to reduce server load
             }
         }
         
