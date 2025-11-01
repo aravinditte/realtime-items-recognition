@@ -1,6 +1,5 @@
-# 🔍 Real-Time Object Detection Web Application
+# Real-Time Object Detection Web Application
 
-[![Deploy Status](https://github.com/aravinditte/realtime-items-recognition/actions/workflows/deploy.yml/badge.svg)](https://github.com/aravinditte/realtime-items-recognition/actions)
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-3.0+-green.svg)](https://flask.palletsprojects.com)
 [![YOLO](https://img.shields.io/badge/YOLO-v8/v11-orange.svg)](https://ultralytics.com)
@@ -8,26 +7,20 @@
 
 A powerful, real-time object detection web application that recognizes and tracks objects in live camera feeds, uploaded videos, and images using state-of-the-art YOLO models.
 
-## ✨ Features
+## Features
 
-- **🎥 Real-Time Detection**: Live camera feed processing with WebSocket streaming
-- **📹 Video Processing**: Upload and analyze video files with object tracking
-- **🖼️ Image Analysis**: Single image processing with bounding box annotations
-- **🧠 Advanced AI**: Powered by YOLOv8/YOLOv11 models for 80+ object classes
-- **⚡ High Performance**: Optimized for low-latency real-time processing
-- **📱 Responsive Design**: Modern UI that works on all devices
-- **🔒 Secure**: Containerized deployment with security best practices
-- **💰 Zero Cost Deployment**: Multiple free hosting options included
+- **Real-Time Detection**: Live camera feed processing with WebSocket streaming
+- **Video Processing**: Upload and analyze video files with object tracking
+- **Image Analysis**: Single image processing with bounding box annotations
+- **Advanced AI**: Powered by YOLOv8/YOLOv11 models for 80+ object classes
+- **High Performance**: Optimized for low-latency real-time processing
+- **Responsive Design**: Modern UI that works on all devices
+- **Secure**: Containerized deployment with security best practices
+- **Zero Cost Deployment**: Multiple free hosting options available
 
-## 🚀 Quick Start
+## Quick Start
 
-### Option 1: One-Click Deploy (Recommended)
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/aravinditte/realtime-items-recognition)
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/M7YqjK?referralCode=bonus)
-
-### Option 2: Local Development
+### Local Development
 
 ```bash
 # Clone the repository
@@ -47,7 +40,7 @@ python app.py
 
 Open your browser and navigate to `http://localhost:5000`
 
-### Option 3: Docker
+### Docker
 
 ```bash
 # Build and run with Docker
@@ -58,7 +51,7 @@ docker run -p 5000:5000 realtime-object-detection
 docker-compose up
 ```
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Backend
 - **Framework**: Flask 3.0+ with SocketIO for real-time communication
@@ -74,11 +67,9 @@ docker-compose up
 
 ### Infrastructure
 - **Containerization**: Docker with multi-stage builds
-- **CI/CD**: GitHub Actions with automated testing
-- **Deployment**: Render, Railway, Docker Hub support
 - **Monitoring**: Health checks and logging
 
-## 📊 Supported Object Classes
+## Supported Object Classes
 
 The application can detect 80+ object classes from the COCO dataset including:
 
@@ -92,7 +83,7 @@ The application can detect 80+ object classes from the COCO dataset including:
 - **Sports**: sports ball, kite, baseball bat, baseball glove, skateboard, surfboard
 - **And many more...**
 
-## 🎯 Usage Modes
+## Usage Modes
 
 ### 1. Live Camera Detection
 - Click "Start Camera" to begin real-time detection
@@ -112,7 +103,7 @@ The application can detect 80+ object classes from the COCO dataset including:
 - Confidence scores and object classification
 - Download processed results
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -143,50 +134,7 @@ FRAME_SKIP=2  # Process every nth frame for performance
 | YOLOv8l | 87MB | Slow | Higher | Production quality |
 | YOLOv8x | 136MB | Slowest | Highest | Maximum accuracy |
 
-## 🚀 Deployment Options
-
-### Free Hosting Platforms
-
-#### 1. Render.com (Recommended)
-- ✅ 750 hours/month free tier
-- ✅ Automatic HTTPS
-- ✅ Custom domains
-- ✅ Zero-downtime deployments
-
-#### 2. Railway
-- ✅ $5 free credits/month
-- ✅ Simple deployment
-- ✅ Built-in monitoring
-- ✅ Auto-scaling
-
-#### 3. Docker Hub + Cloud Run
-- ✅ Serverless scaling
-- ✅ Pay-per-use
-- ✅ Global deployment
-- ✅ Container-based
-
-### Production Deployment
-
-```bash
-# Environment setup
-export FLASK_ENV=production
-export SECRET_KEY=$(openssl rand -hex 32)
-
-# Build production image
-docker build -t realtime-object-detection:prod .
-
-# Deploy with resource limits
-docker run -d \
-  --name object-detection \
-  --memory=2g \
-  --cpus=1.0 \
-  -p 5000:5000 \
-  -e FLASK_ENV=production \
-  -e SECRET_KEY=$SECRET_KEY \
-  realtime-object-detection:prod
-```
-
-## 📈 Performance Optimization
+## Performance Optimization
 
 ### System Requirements
 
@@ -203,7 +151,7 @@ docker run -d \
 4. **Batch Processing**: Process multiple objects in single inference
 5. **Caching**: Enable model caching for faster startup
 
-## 🔒 Security Features
+## Security Features
 
 - **Container Security**: Non-root user execution
 - **Input Validation**: File type and size restrictions
@@ -212,7 +160,7 @@ docker run -d \
 - **Health Monitoring**: Automated health checks
 - **Secure Headers**: Security-focused HTTP headers
 
-## 📊 Monitoring & Analytics
+## Monitoring & Analytics
 
 ### Built-in Metrics
 - Real-time FPS monitoring
@@ -223,26 +171,22 @@ docker run -d \
 
 ### Health Endpoints
 - `GET /health` - Application health status
-- `GET /metrics` - Performance metrics (coming soon)
 - WebSocket connection monitoring
 
-## 🧪 Testing
+## Testing
 
 ```bash
-# Run tests
-python -m pytest tests/
-
 # Test model loading
 python -c "from ultralytics import YOLO; YOLO('yolov8n.pt')"
 
 # Test Flask app
-python -c "from app import app; print('✅ App imports successfully')"
+python -c "from app import app; print('App imports successfully')"
 
 # Load testing (install hey first)
 hey -n 1000 -c 10 http://localhost:5000/health
 ```
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -267,7 +211,7 @@ flake8 .
 pytest
 ```
 
-## 📝 API Documentation
+## API Documentation
 
 ### REST Endpoints
 
@@ -293,7 +237,7 @@ error                - Error notifications
 video_complete       - Video processing finished
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -327,18 +271,18 @@ video_complete       - Video processing finished
    # Increase system memory
    ```
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👨‍💻 Author
+## Author
 
 **Aravind Itte**
 - GitHub: [@aravinditte](https://github.com/aravinditte)
 - LinkedIn: [Connect with me](https://linkedin.com/in/aravinditte)
 - Email: aravinditte@gmail.com
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [Ultralytics](https://ultralytics.com) for the amazing YOLO models
 - [OpenCV](https://opencv.org) for computer vision capabilities
@@ -346,14 +290,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Socket.IO](https://socket.io) for real-time communication
 - [Bootstrap](https://getbootstrap.com) for the responsive UI
 
-## ⭐ Star History
-
-If you find this project useful, please consider giving it a star! ⭐
-
-[![Star History Chart](https://api.star-history.com/svg?repos=aravinditte/realtime-items-recognition&type=Date)](https://star-history.com/#aravinditte/realtime-items-recognition&Date)
-
 ---
 
 <p align="center">
-  Made with ❤️ by <a href="https://github.com/aravinditte">Aravind Itte</a>
+  Made with love by <a href="https://github.com/aravinditte">Aravind Itte</a>
 </p>
