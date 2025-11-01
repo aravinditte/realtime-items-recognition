@@ -5,7 +5,7 @@ Real-Time Object Detection Web Application
 Fixes:
 - Remove invalid 'transports' kwarg from socketio.run() that was causing TypeError
 - Force WebSocket transport via client-side configuration instead
-- Use Render's PORT environment variable (default 10000) for proper port binding
+- Use PORT=5000 as default (can be overridden by Render's PORT env var)
 - Keep frame queueing, rate limiting, and preprocessing improvements
 - Add configurable detection thresholds via environment variables
 """
@@ -409,8 +409,8 @@ if __name__ == '__main__':
     # Load YOLO model on startup
     load_model()
     
-    # Use Render's PORT environment variable (defaults to 10000)
-    port = int(os.environ.get('PORT', 10000))
+    # Use PORT=5000 as default, can be overridden by Render's PORT env var
+    port = int(os.environ.get('PORT', 5000))
     host = os.environ.get('HOST', '0.0.0.0')
     
     logger.info(f"Starting Real-Time Object Detection Server on {host}:{port}")
