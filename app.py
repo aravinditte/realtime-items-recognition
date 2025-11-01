@@ -21,6 +21,8 @@ import uuid
 from datetime import datetime
 import threading
 import time
+from io import BytesIO
+from PIL import Image
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -83,7 +85,7 @@ def detect_objects(frame):
     
     try:
         # Run YOLO detection
-        results = model(frame, conf=0.5, iou=0.45)
+        results = model(frame, conf=0.4, iou=0.45, verbose=False)
         
         detections = []
         
@@ -98,16 +100,20 @@ def detect_objects(frame):
                     class_id = int(box.cls[0].cpu().numpy())
                     class_name = model.names[class_id]
                     
-                    # Draw bounding box
-                    cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+                    # Draw bounding box with better styling
+                    color = (0, 255, 0)  # Green color
+                    thickness = 2
+                    cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), color, thickness)
                     
-                    # Draw label
+                    # Draw label background
                     label = f"{class_name}: {confidence:.2f}"
-                    label_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)[0]
+                    label_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)[0]
                     cv2.rectangle(frame, (int(x1), int(y1) - label_size[1] - 10), 
-                                (int(x1) + label_size[0], int(y1)), (0, 255, 0), -1)
+                                (int(x1) + label_size[0], int(y1)), color, -1)
+                    
+                    # Draw label text
                     cv2.putText(frame, label, (int(x1), int(y1) - 5), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+                              cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
                     
                     # Store detection info
                     detections.append({
@@ -226,85 +232,66 @@ def handle_disconnect():
     
     logger.info(f"Client {client_id} disconnected")
 
-@socketio.on('start_webcam')
-def handle_start_webcam():
-    """Start webcam streaming"""
+@socketio.on('webcam_frame')
+def handle_webcam_frame(data):
+    """Handle webcam frame from client browser"""
     client_id = request.sid
-    processing_active[client_id] = True
     
-    def webcam_stream():
-        """Webcam streaming thread"""
-        cap = cv2.VideoCapture(0)
+    try:
+        # Decode base64 image from browser
+        image_data = data['frame'].split(',')[1]  # Remove data:image/jpeg;base64,
+        image_bytes = base64.b64decode(image_data)
         
-        if not cap.isOpened():
-            emit('error', {'message': 'Cannot access webcam'}, room=client_id)
-            processing_active[client_id] = False
-            return
+        # Convert to OpenCV format
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
-        # Set camera properties for better performance
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        cap.set(cv2.CAP_PROP_FPS, 15)
-        
-        while processing_active.get(client_id, False):
-            ret, frame = cap.read()
-            if not ret:
-                break
-            
-            # Process frame
+        if frame is not None:
+            # Process frame for object detection
             processed_frame, detections = detect_objects(frame)
             
-            # Encode frame
-            _, buffer = cv2.imencode('.jpg', processed_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
-            frame_base64 = base64.b64encode(buffer).decode('utf-8')
+            # Encode processed frame back to base64
+            _, buffer = cv2.imencode('.jpg', processed_frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            processed_base64 = base64.b64encode(buffer).decode('utf-8')
             
-            # Emit frame to client
-            socketio.emit('frame_data', {
-                'frame': frame_base64,
+            # Send processed frame back to client
+            emit('processed_frame', {
+                'frame': f"data:image/jpeg;base64,{processed_base64}",
                 'detections': detections,
                 'timestamp': time.time()
-            }, room=client_id)
-            
-            # Small delay to control frame rate
-            eventlet.sleep(0.1)  # ~10 FPS
+            })
         
-        cap.release()
-        logger.info(f"Webcam stream ended for client {client_id}")
-    
-    # Start webcam thread
-    eventlet.spawn(webcam_stream)
-    emit('webcam_status', {'status': 'started'})
-
-@socketio.on('stop_webcam')
-def handle_stop_webcam():
-    """Stop webcam streaming"""
-    client_id = request.sid
-    processing_active[client_id] = False
-    emit('webcam_status', {'status': 'stopped'})
+    except Exception as e:
+        logger.error(f"Error processing webcam frame: {e}")
+        emit('error', {'message': f'Frame processing error: {str(e)}'})
 
 @socketio.on('process_video')
 def handle_process_video(data):
-    """Process uploaded video file"""
+    """Process uploaded video file with real-time detection"""
     client_id = request.sid
     filepath = data.get('filepath')
     
     if not filepath or not os.path.exists(filepath):
-        emit('error', {'message': 'Video file not found'}, room=client_id)
+        emit('error', {'message': 'Video file not found'})
         return
     
     processing_active[client_id] = True
     
     def video_stream():
-        """Video processing thread"""
+        """Video processing thread with real-time detection"""
         cap = cv2.VideoCapture(filepath)
         
         if not cap.isOpened():
-            emit('error', {'message': 'Cannot open video file'}, room=client_id)
+            socketio.emit('error', {'message': 'Cannot open video file'}, room=client_id)
             processing_active[client_id] = False
             return
         
         frame_count = 0
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        
+        # Calculate delay to maintain video speed
+        frame_delay = 1.0 / fps if fps > 0 else 0.033  # Default 30 FPS
         
         while processing_active.get(client_id, False):
             ret, frame = cap.read()
@@ -313,24 +300,24 @@ def handle_process_video(data):
             
             frame_count += 1
             
-            # Process every nth frame for performance
-            if frame_count % 2 == 0:  # Process every 2nd frame
-                processed_frame, detections = detect_objects(frame)
-                
-                # Encode frame
-                _, buffer = cv2.imencode('.jpg', processed_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
-                frame_base64 = base64.b64encode(buffer).decode('utf-8')
-                
-                # Emit frame to client
-                socketio.emit('frame_data', {
-                    'frame': frame_base64,
-                    'detections': detections,
-                    'progress': frame_count / total_frames * 100,
-                    'frame_number': frame_count
-                }, room=client_id)
+            # Process frame with object detection
+            processed_frame, detections = detect_objects(frame)
+            
+            # Encode frame
+            _, buffer = cv2.imencode('.jpg', processed_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+            frame_base64 = base64.b64encode(buffer).decode('utf-8')
+            
+            # Emit frame to client with detection info
+            socketio.emit('video_frame', {
+                'frame': f"data:image/jpeg;base64,{frame_base64}",
+                'detections': detections,
+                'progress': (frame_count / total_frames) * 100,
+                'frame_number': frame_count,
+                'total_frames': total_frames
+            }, room=client_id)
             
             # Control playback speed
-            eventlet.sleep(0.033)  # ~30 FPS
+            eventlet.sleep(frame_delay)
         
         cap.release()
         
@@ -345,6 +332,13 @@ def handle_process_video(data):
     
     # Start video processing thread
     eventlet.spawn(video_stream)
+
+@socketio.on('stop_processing')
+def handle_stop_processing():
+    """Stop any active processing"""
+    client_id = request.sid
+    processing_active[client_id] = False
+    emit('processing_stopped', {'status': 'stopped'})
 
 if __name__ == '__main__':
     # Load YOLO model on startup
