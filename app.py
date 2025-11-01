@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 """
-Realtime object recognition server with decoupled pipeline:
-- Inference workers (greenlets) consume frames from a bounded queue
-- Emitter sends frames independently at a capped FPS
-- Adaptive stride + watchdog for video processing to prevent stalls
-- Micro-batching (batch size 2) when queue has enough frames
-- Separate lightweight progress emits to keep UI responsive
+Realtime object recognition server with decoupled pipeline and explicit model_loaded status.
 """
 import os
 import cv2
@@ -23,23 +18,19 @@ from werkzeug.utils import secure_filename
 
 from engine import RealtimeEngine
 
-# Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Realtime config
-FRAME_QUEUE_MAX = 12           # input queue for workers (webcam/video)
-INFER_WORKERS = 2              # number of concurrent inference workers
-EMIT_FPS_CAP = 12              # UI emission cap
-JPEG_QUALITY_OUT = 70          # JPEG quality for outbound annotated frames
-WATCHDOG_SECS = 5.0            # if no frame processed, bump stride
+FRAME_QUEUE_MAX = 12
+INFER_WORKERS = 2
+EMIT_FPS_CAP = 12
+JPEG_QUALITY_OUT = 70
+WATCHDOG_SECS = 5.0
 
-# Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'realtime-object-recognition-2024'
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
-# SocketIO
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
@@ -52,7 +43,6 @@ socketio = SocketIO(
     cookie=False
 )
 
-# Engine (lazy init)
 engine = None
 
 def ensure_engine():
@@ -61,9 +51,13 @@ def ensure_engine():
         logger.info('Initializing realtime engine (YOLO+SORT)...')
         engine = RealtimeEngine('yolov8n.pt')
         logger.info('Realtime engine ready.')
+        # Broadcast readiness to all
+        try:
+            socketio.emit('connection_status', {'status':'connected','engine_ready': True, 'model_loaded': True})
+        except Exception:
+            pass
     return engine
 
-# Per-client state
 class ClientState:
     def __init__(self):
         self.input_q = LightQueue(maxsize=FRAME_QUEUE_MAX)
@@ -91,11 +85,11 @@ def index():
 
 @app.route('/health')
 def health():
-    return jsonify({'status':'healthy','engine_ready': ensure_engine() is not None,'ts': datetime.now().isoformat()})
+    return jsonify({'status':'healthy','engine_ready': ensure_engine() is not None,'model_loaded': True,'ts': datetime.now().isoformat()})
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    ensure_engine()
+    eng = ensure_engine()
     if 'file' not in request.files:
         return jsonify({'error':'No file provided'}), 400
     f = request.files['file']
@@ -112,7 +106,7 @@ def upload():
         img = cv2.imread(path)
         if img is None:
             return jsonify({'error':'Invalid image'}), 400
-        b64, tracks = engine.process_frame(img)
+        b64, tracks = eng.process_frame(img)
         try: os.remove(path)
         except: pass
         return jsonify({'type':'image','image': b64,'detections': tracks,'count': len(tracks)})
@@ -121,10 +115,10 @@ def upload():
 
 @socketio.on('connect')
 def on_connect():
-    ensure_engine()
+    ready = ensure_engine() is not None
     sid = request.sid
     clients[sid] = ClientState()
-    emit('connection_status', {'status':'connected','engine_ready': True})
+    emit('connection_status', {'status':'connected','engine_ready': ready, 'model_loaded': ready})
 
 @socketio.on('disconnect')
 def on_disconnect():
@@ -134,7 +128,6 @@ def on_disconnect():
         st.stop = True
     clients.pop(sid, None)
 
-# --------------- Webcam realtime ---------------
 @socketio.on('webcam_frame')
 def on_webcam_frame(data):
     ensure_engine()
@@ -142,7 +135,6 @@ def on_webcam_frame(data):
     st = clients.get(sid)
     if not st:
         return
-    # Drop oldest to keep realtime feel
     try:
         while st.input_q.qsize() >= FRAME_QUEUE_MAX:
             try: st.input_q.get_nowait()
@@ -150,13 +142,11 @@ def on_webcam_frame(data):
         st.input_q.put_nowait(('webcam', data['frame']))
     except Exception:
         pass
-    # Start pipeline if not running
     if not st.processing:
         st.processing = True
         eventlet.spawn_n(infer_workers, sid, st)
         eventlet.spawn_n(emitter_loop, sid, st)
 
-# --------------- Video processing ---------------
 @socketio.on('process_video')
 def on_process_video(data):
     ensure_engine()
@@ -168,7 +158,6 @@ def on_process_video(data):
     if not path or not os.path.exists(path):
         emit('error', {'message':'Video not found'})
         return
-    # start producer, workers, emitter
     st.stop = False
     if not st.processing:
         st.processing = True
@@ -176,7 +165,6 @@ def on_process_video(data):
         eventlet.spawn_n(emitter_loop, sid, st)
     eventlet.spawn_n(video_producer, sid, st, path)
 
-# Producer: decodes video and enqueues frames with adaptive stride + watchdog
 def _choose_stride(total_frames:int, fps:float) -> int:
     duration = (total_frames / fps) if fps > 0 else 10.0
     if duration <= 12:
@@ -209,22 +197,18 @@ def video_producer(sid, st:ClientState, path:str):
             idx += 1
             if idx % stride != 0:
                 continue
-            # backpressure: drop if input queue is full
             try:
                 if st.input_q.qsize() >= FRAME_QUEUE_MAX:
-                    # skip ahead to keep responsiveness
                     continue
-                # encode frame to bytes and enqueue
                 _, buf = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
                 st.input_q.put_nowait(('video', base64.b64encode(buf).decode('utf-8')))
             except Exception:
                 pass
             now = time.time()
-            if now - last_progress_emit > 0.33:  # 3 times a second
+            if now - last_progress_emit > 0.33:
                 pct = (idx/total*100) if total else 0
                 socketio.emit('video_progress', {'progress': pct, 'frame_number': idx}, room=sid)
                 last_progress_emit = now
-            # watchdog: if no processed frame in WATCHDOG_SECS, increase stride
             if now - st.last_processed_ts > WATCHDOG_SECS and stride < 5:
                 stride += 1
                 socketio.emit('video_info', {'message': f'Auto-increasing stride to {stride} for speed'}, room=sid)
@@ -235,18 +219,15 @@ def video_producer(sid, st:ClientState, path:str):
         st.stop = True
         socketio.emit('video_complete', {'message':'Video processing complete'}, room=sid)
 
-# Inference workers: consume from input_q, produce annotated frames to output_q (micro-batch size 2)
 def infer_workers(sid, st:ClientState):
     eng = ensure_engine()
     def worker_loop():
         while not st.stop:
             try:
                 items = []
-                # try to build a small batch
                 item = st.input_q.get(timeout=1.0)
                 items.append(item)
                 try:
-                    # pull one more if available
                     items.append(st.input_q.get_nowait())
                 except Empty:
                     pass
@@ -259,7 +240,7 @@ def infer_workers(sid, st:ClientState):
                         img_bytes = base64.b64decode(image_data)
                         nparr = np.frombuffer(img_bytes, np.uint8)
                         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-                    else:  # 'video' payload is jpeg base64 string
+                    else:
                         img_bytes = base64.b64decode(payload)
                         nparr = np.frombuffer(img_bytes, np.uint8)
                         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -267,7 +248,6 @@ def infer_workers(sid, st:ClientState):
                         continue
                     b64, tracks = eng.process_frame(frame)
                     st.last_processed_ts = time.time()
-                    # push to output_q (drop oldest if full)
                     try:
                         while st.output_q.qsize() >= FRAME_QUEUE_MAX:
                             try: st.output_q.get_nowait()
@@ -277,11 +257,9 @@ def infer_workers(sid, st:ClientState):
                         pass
                 except Exception:
                     continue
-    # spawn workers
     for _ in range(INFER_WORKERS):
         eventlet.spawn_n(worker_loop)
 
-# Emitter: sends frames to client at capped FPS, independent of worker speed
 def emitter_loop(sid, st:ClientState):
     emit_interval = 1.0 / EMIT_FPS_CAP
     while not st.stop:
@@ -291,10 +269,11 @@ def emitter_loop(sid, st:ClientState):
             continue
         now = time.time()
         if now - st.last_emit_ts < emit_interval:
-            # throttle: skip this frame to keep FPS cap
             continue
         try:
-            socketio.emit('processed_frame', {'frame': f"data:image/jpeg;base64,{b64}", 'detections': tracks, 'realtime': True}, room=sid)
+            socketio.emit('processed_frame', {'frame': f"data:image/jpeg;base64,{b64}", 'detections': tracks, 'realtime': True, 'model_loaded': True}, room=sid)
+            # Emit a lightweight status ping to flip any pending UI indicators
+            socketio.emit('connection_status', {'status':'connected','engine_ready': True, 'model_loaded': True}, room=sid)
             st.last_emit_ts = now
         except Exception:
             pass
