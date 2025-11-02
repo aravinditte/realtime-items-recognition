@@ -13,7 +13,7 @@ import os
 import cv2
 import numpy as np
 import logging
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, send_file, make_response, abort
 from flask_socketio import SocketIO, emit
 from ultralytics import YOLO
 import base64
@@ -27,6 +27,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 from datetime import datetime
 import gc
+import mimetypes
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -192,10 +193,10 @@ def allowed_file(filename):
     """Check if file extension is allowed"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def encode_image_to_base64(image):
+def encode_image_to_base64(image, quality=80):
     """Convert OpenCV image to base64 string"""
     try:
-        _, buffer = cv2.imencode('.jpg', image)
+        _, buffer = cv2.imencode('.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, quality])
         img_base64 = base64.b64encode(buffer).decode('utf-8')
         return img_base64
     except Exception as e:
@@ -222,6 +223,23 @@ def decode_base64_to_image(base64_string):
     except Exception as e:
         logger.error(f"Error decoding base64 image: {str(e)}")
         return None
+
+def partial_response(path, start, end, length, mime):
+    """Create partial response for video streaming"""
+    try:
+        with open(path, 'rb') as f:
+            f.seek(start)
+            data = f.read(end - start + 1)
+        resp = make_response(data)
+        resp.headers.add('Content-Type', mime)
+        resp.headers.add('Content-Range', f'bytes {start}-{end}/{length}')
+        resp.headers.add('Accept-Ranges', 'bytes')
+        resp.headers.add('Content-Length', str(end - start + 1))
+        resp.status_code = 206
+        return resp
+    except Exception as e:
+        logger.error(f"Error creating partial response: {e}")
+        abort(500)
 
 def process_webcam_frame(frame_data):
     """Process a single webcam frame"""
@@ -262,8 +280,8 @@ def process_webcam_frame(frame_data):
             statistics['total_frames_processed']
         )
         
-        # Encode result
-        result_base64 = encode_image_to_base64(annotated_frame)
+        # Encode result with quality adjustment
+        result_base64 = encode_image_to_base64(annotated_frame, quality=75)
         
         return {
             'image': result_base64,
@@ -277,7 +295,7 @@ def process_webcam_frame(frame_data):
         return None, str(e)
 
 def process_video_file(video_path, emit_callback):
-    """Process uploaded video file frame by frame"""
+    """Process uploaded video file frame by frame with output video creation"""
     global processing_active
     
     try:
@@ -286,13 +304,31 @@ def process_video_file(video_path, emit_callback):
             emit_callback('error', {'message': 'Failed to open video file'})
             return
         
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        fps = cap.get(cv2.CAP_PROP_FPS)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 0
+        src_fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) or 640)
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) or 480)
         
-        logger.info(f"Processing video: {total_frames} frames at {fps} FPS")
+        logger.info(f"Processing video: {total_frames} frames at {src_fps} FPS ({width}x{height})")
+        
+        # Prepare output video writer
+        base_name = os.path.basename(video_path)
+        name, _ = os.path.splitext(base_name)
+        out_name = f"{name}_annotated.mp4"
+        out_path = os.path.join('uploads', out_name)
+        
+        # Use H.264 codec for better browser compatibility
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        writer = cv2.VideoWriter(out_path, fourcc, src_fps, (width, height))
+        
+        if not writer.isOpened():
+            emit_callback('error', {'message': 'Failed to create output video writer'})
+            return
         
         frame_count = 0
+        total_detections = 0
         processing_active = True
+        start_time = time.time()
         
         while processing_active and cap.isOpened():
             ret, frame = cap.read()
@@ -303,40 +339,60 @@ def process_video_file(video_path, emit_callback):
             results, error = detector.detect_objects(frame)
             if not error and results:
                 annotated_frame, detection_count = detector.draw_detections(frame, results)
+                total_detections += detection_count
             else:
                 annotated_frame = frame
                 detection_count = 0
             
-            # Encode and emit frame
-            frame_base64 = encode_image_to_base64(annotated_frame)
-            if frame_base64:
-                progress = (frame_count + 1) / total_frames * 100
-                emit_callback('video_frame', {
-                    'image': frame_base64,
-                    'frame_number': frame_count + 1,
-                    'total_frames': total_frames,
-                    'progress': round(progress, 2),
-                    'detections': detection_count
-                })
+            # Write annotated frame to output video
+            writer.write(annotated_frame)
+            
+            # Emit progress every 5 frames to avoid overwhelming client
+            if frame_count % 5 == 0 or frame_count == total_frames - 1:
+                frame_base64 = encode_image_to_base64(annotated_frame, quality=60)
+                if frame_base64:
+                    progress = ((frame_count + 1) / max(1, total_frames)) * 100 if total_frames else 0
+                    elapsed = time.time() - start_time
+                    fps_est = (frame_count + 1) / elapsed if elapsed > 0 else 0
+                    
+                    emit_callback('video_frame', {
+                        'image': frame_base64,
+                        'frame_number': frame_count + 1,
+                        'total_frames': total_frames,
+                        'progress': round(progress, 2),
+                        'detections': detection_count,
+                        'total_detections': total_detections,
+                        'fps': round(fps_est, 1),
+                        'elapsed_time': round(elapsed, 1)
+                    })
             
             frame_count += 1
             
-            # Add small delay to prevent overwhelming the client
-            time.sleep(0.03)  # ~30 FPS playback
+            # Small delay to prevent overwhelming
+            time.sleep(0.01)
         
         cap.release()
+        writer.release()
         
         if processing_active:
+            elapsed_total = time.time() - start_time
             emit_callback('video_complete', {
                 'total_frames_processed': frame_count,
-                'message': 'Video processing completed successfully'
+                'total_detections': total_detections,
+                'processing_time': round(elapsed_total, 2),
+                'output_url': f"/files/{out_name}",
+                'output_name': out_name,
+                'fps': src_fps,
+                'width': width,
+                'height': height,
+                'message': f'Video processing completed! Processed {frame_count} frames with {total_detections} total detections.'
             })
         
         processing_active = False
         
-        # Clean up video file
-        if os.path.exists(video_path):
-            os.remove(video_path)
+        # Keep original file for potential replay
+        # if os.path.exists(video_path):
+        #     os.remove(video_path)
             
     except Exception as e:
         logger.error(f"Error processing video: {str(e)}")
@@ -364,6 +420,42 @@ def health():
         'statistics': statistics,
         'timestamp': datetime.now().isoformat()
     })
+
+@app.route('/files/<path:filename>')
+def serve_file(filename):
+    """Serve processed video files with range request support"""
+    try:
+        # Security: ensure file is in uploads directory
+        safe_dir = os.path.abspath('uploads')
+        full_path = os.path.abspath(os.path.join('uploads', secure_filename(filename)))
+        
+        if not full_path.startswith(safe_dir) or not os.path exists(full_path):
+            abort(404)
+        
+        # Get MIME type
+        mime_type = mimetypes.guess_type(full_path)[0] or 'application/octet-stream'
+        
+        # Handle range requests for video streaming
+        range_header = request.headers.get('Range')
+        if range_header:
+            file_size = os.path.getsize(full_path)
+            byte_start = 0
+            byte_end = file_size - 1
+            
+            # Parse range header
+            range_match = range_header.replace('bytes=', '').split('-')
+            if range_match[0]:
+                byte_start = int(range_match[0])
+            if len(range_match) > 1 and range_match[1]:
+                byte_end = min(int(range_match[1]), file_size - 1)
+            
+            return partial_response(full_path, byte_start, byte_end, file_size, mime_type)
+        
+        return send_file(full_path, mimetype=mime_type, conditional=True)
+    
+    except Exception as e:
+        logger.error(f"Error serving file {filename}: {str(e)}")
+        abort(500)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -420,6 +512,7 @@ def upload_file():
             return jsonify({
                 'type': 'video',
                 'filepath': filepath,
+                'filename': filename,
                 'message': 'Video uploaded successfully. Start processing via WebSocket.'
             })
     
@@ -439,7 +532,8 @@ def handle_connect():
     emit('connection_status', {
         'status': 'connected',
         'message': 'Connected to real-time object detection server',
-        'model_name': CONFIG['MODEL_NAME']
+        'model_name': CONFIG['MODEL_NAME'],
+        'connections': current_connections
     })
 
 @socketio.on('disconnect')
@@ -463,7 +557,7 @@ def handle_webcam_frame(data):
         try:
             frame_queue.put_nowait(frame_data)
         except queue.Full:
-            # Skip frame if queue is full
+            # Skip frame if queue is full to prevent backlog
             pass
         
         # Process frame from queue
@@ -501,7 +595,8 @@ def handle_process_video(data):
         
         thread = threading.Thread(
             target=process_video_file,
-            args=(filepath, emit_callback)
+            args=(filepath, emit_callback),
+            daemon=True
         )
         thread.start()
         
@@ -536,8 +631,11 @@ if __name__ == '__main__':
         logger.error("Failed to load YOLO model. Exiting...")
         exit(1)
     
+    # Create uploads directory
+    os.makedirs('uploads', exist_ok=True)
+    
     # Get host and port from environment
-    host = os.environ.get('HOST', '0.0.0.0')
+    host = os.environ.get('HOST', '127.0.0.1')
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_ENV') == 'development'
     
