@@ -1,9 +1,9 @@
 # Real-Time Object Detection Dockerfile
 # Multi-stage build for optimized production image
-# Fixed for Debian Trixie (python:3.11-slim) OpenGL dependencies
+# Fixed for Debian Trixie (python:3.11-slim) with correct Mesa packages
 
 # Build stage
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -21,9 +21,6 @@ RUN apt-get update && apt-get install -y \
     libxrender1 \
     libgomp1 \
     libgl1 \
-    libglx-mesa0 \
-    libegl1-mesa \
-    libglu1-mesa \
     libgthread-2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -37,7 +34,7 @@ RUN pip install --upgrade pip setuptools wheel && \
     pip install -r requirements.txt
 
 # Production stage
-FROM python:3.11-slim as production
+FROM python:3.11-slim AS production
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -54,9 +51,6 @@ RUN apt-get update && apt-get install -y \
     libxrender1 \
     libgomp1 \
     libgl1 \
-    libglx-mesa0 \
-    libegl1-mesa \
-    libglu1-mesa \
     libgthread-2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -82,10 +76,10 @@ RUN mkdir -p uploads models logs && \
 # Switch to non-root user
 USER appuser
 
-# Pre-pull YOLO model to warm cache
+# Pre-download YOLO model to warm cache
 RUN python -c "from ultralytics import YOLO; YOLO('yolov8n.pt')"
 
-# Health check
+# Health check for Render deployment
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:5000/health', timeout=5).raise_for_status()" || exit 1
 
