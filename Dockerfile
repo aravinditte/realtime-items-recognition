@@ -18,13 +18,13 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
-    libxrender-dev \
+    libxrender1 \
     libgomp1 \
     libgl1 \
-    libglib2.0-dev \
     libglx-mesa0 \
     libegl1-mesa \
     libglu1-mesa \
+    libgthread-2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create virtual environment
@@ -57,6 +57,7 @@ RUN apt-get update && apt-get install -y \
     libglx-mesa0 \
     libegl1-mesa \
     libglu1-mesa \
+    libgthread-2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -81,11 +82,10 @@ RUN mkdir -p uploads models logs && \
 # Switch to non-root user
 USER appuser
 
-# Download YOLO model (this will be cached in the image)
-# Using a more lightweight approach for Railway deployment
-RUN python -c "from ultralytics import YOLO; model = YOLO('yolov8n.pt'); print('YOLOv8n model downloaded successfully')"
+# Pre-pull YOLO model to warm cache
+RUN python -c "from ultralytics import YOLO; YOLO('yolov8n.pt')"
 
-# Health check - Updated for Railway compatibility
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:5000/health', timeout=5).raise_for_status()" || exit 1
 
